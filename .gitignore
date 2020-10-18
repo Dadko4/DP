@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.fast5
+*.fastq
+sratoolkit.2.10.8-win64/
+*.gz
+*.3
 
 # C extensions
 *.so
