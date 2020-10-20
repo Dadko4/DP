@@ -12,13 +12,13 @@ np.random.seed(0)
 
 class DataGenerator:
     def __init__(self, batch_size=50, normalize=None, quality_threshold=0,
-                 sample_len=300, step_len=10, load2ram=False, test=False
+                 sample_len=300, step_len=10, load2ram=False, test=False,
                  random_sample=False):
         seq_path = (r'C:\Users\dadom\Desktop\pripDP\DP\FAST5\nanopore\MAP_Data'
                     r'\08_07_16_R9_pUC_BC\MA\downloads\pass\NB07\*.fast5')
         files_list = glob(seq_path)
         self.files_list = files_list
-        if ranodm_sample:
+        if random_sample:
             self.files_list = random.sample(files_list, len(files_list))
         self.files_generator = iter(self.files_list)
         self.epoch = 0
@@ -39,8 +39,8 @@ class DataGenerator:
                 else:
                     self.epoch = 0
                     break
-            np.savez(f"{self.quality_threshold}_{self.normalize}_{test}.npz", 
-                     np.array(self.data))
+            np.save(f"{self.quality_threshold}_{self.normalize}_{test}", 
+                    np.array(self.data))
             self.actual_signal_generator = iter(self.data)
 
     def __next__(self):
@@ -48,7 +48,7 @@ class DataGenerator:
             try:
                 return next(self.actual_signal_generator)
             except StopIteration:
-                return next(self._reset_actual_generator)
+                return self._reset_actual_generator(return_next=True)
         else:
             return self.make_batch()
 
@@ -60,8 +60,14 @@ class DataGenerator:
             except (StopIteration, TypeError):
                 sample = self._next_data(return_next=True)
             if sample is not None:
-                X.append(sample)
-        return (np.array(X), np.array(X))
+                X.append(sample.reshape(-1, 1))
+        return np.array(X)
+
+    def load_from_file(self, filename):
+        with open(filename, 'rb') as f:
+            self.data = np.load(f)
+        self.load2ram = True
+        self.actual_signal_generator = iter(self.data)
 
     def _reset_files_generator(self, return_next=False):
         self.files_generator = iter(self.files_list)
@@ -87,7 +93,8 @@ class DataGenerator:
                 to = signal.shape[0] - 1
                 partitioned.append(signal[from_:to])
                 i += self.step_len
-            return partitioned
+            else:
+                return partitioned
 
     def _next_data(self, return_next=False):
         while True:

@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.fast5
 *.fastq
+*.npy
 sratoolkit.2.10.8-win64/
 *.gz
 *.3
