@@ -11,7 +11,7 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 np.random.seed(0)
 
 
-def model_builder(timesteps=300, input_dim=1, latent_dim=150):
+def model_builder(timesteps=300, input_dim=1):
     # initializer = RandomNormal(mean=0.0, stddev=0.05, seed=1)
     input_ = keras.Input(shape=(timesteps, input_dim))
     x = layers.Conv1D(64, 12, activation='relu', padding='same')(input_)
