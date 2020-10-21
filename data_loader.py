@@ -39,8 +39,9 @@ class DataGenerator:
                 else:
                     self.epoch = 0
                     break
-            np.save(f"{self.quality_threshold}_{self.normalize}_{test}", 
+            np.save(f"{batch_size}_{sample_len}_{quality_threshold}_{normalize}_{test}",
                     np.array(self.data))
+            self.data = np.array(self.data)
             self.actual_signal_generator = iter(self.data)
 
     def __next__(self):
