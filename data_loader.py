@@ -104,14 +104,19 @@ class DataGenerator:
             except StopIteration:
                 print("all files were iterated")
                 filename = self._reset_files_generator(return_next=True)
-            with Fast5(filename) as fh:
-                signal = fh.get_read(raw=True)
-                mean_quality = 1000
-                if self.quality_threshold > 0:
-                    fastq = fh.get_fastq()
-                    quality_str = fastq.decode('UTF-8').split('\n')[3]
-                    qualities = [util.qstring_to_phred(char) for char in quality_str]
-                    mean_quality = np.mean(qualities)
+            try:
+                fh = Fast5(filename)
+            except:
+                print(f"unable to open file {filename}")
+                continue
+            signal = fh.get_read(raw=True)
+            mean_quality = 1000
+            if self.quality_threshold > 0:
+                fastq = fh.get_fastq()
+                quality_str = fastq.decode('UTF-8').split('\n')[3]
+                qualities = [util.qstring_to_phred(char) for char in quality_str]
+                mean_quality = np.mean(qualities)
+            fh.close()
             if mean_quality < self.quality_threshold:
                 continue
             uniq_arr = np.unique(signal)
