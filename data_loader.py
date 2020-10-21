@@ -3,8 +3,7 @@ from glob import glob
 from fast5_research import Fast5, util
 from statsmodels import robust
 import random
-from tqdm import tqdm
-import pickle
+from config import seq_path
 
 random.seed(0)
 np.random.seed(0)
@@ -14,8 +13,6 @@ class DataGenerator:
     def __init__(self, batch_size=50, normalize=None, quality_threshold=0,
                  sample_len=300, step_len=10, load2ram=False, test=False,
                  random_sample=False):
-        seq_path = (r'C:\Users\dadom\Desktop\pripDP\DP\FAST5\nanopore\MAP_Data'
-                    r'\08_07_16_R9_pUC_BC\MA\downloads\pass\NB07\*.fast5')
         files_list = glob(seq_path)
         self.files_list = files_list
         if random_sample:

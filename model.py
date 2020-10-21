@@ -23,8 +23,6 @@ def model_builder(timesteps=300, input_dim=1):
     x = layers.Conv1D(32, 12, activation='relu', padding='same')(x)
     encoded = layers.MaxPooling1D(2, padding='same')(x)
 
-    # at this point the representation is (4, 4, 8) i.e. 128-dimensional
-
     x = layers.Conv1D(32, 12, activation='relu', padding='same')(encoded)
     x = layers.UpSampling1D(2)(x)
     x = layers.Conv1D(32, 12, activation='relu', padding='same')(x)

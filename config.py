@@ -12,3 +12,5 @@ model_config = {
  "timesteps": 256,
  "input_dim": 1
 }
+seq_path = (r'C:\Users\dadom\Desktop\pripDP\DP\FAST5\nanopore\MAP_Data'
+            r'\08_07_16_R9_pUC_BC\MA\downloads\pass\NB07\*.fast5')
