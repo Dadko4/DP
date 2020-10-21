@@ -8,7 +8,7 @@ __pycache__/
 sratoolkit.2.10.8-win64/
 *.gz
 *.3
-
+*.h5
 # C extensions
 *.so
 
