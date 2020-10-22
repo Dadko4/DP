@@ -29,14 +29,14 @@ class DataGenerator:
         self.load2ram = load2ram
         if load2ram:
             self.data = []
-            while True:
+            while self.epoch == 0:
                 batch = self.make_batch()
                 if self.epoch < 1:
                     self.data.append(batch)
                 else:
-                    self.epoch = 0
+                    self.epoch=0
                     break
-            np.save(f"{batch_size}_{sample_len}_{quality_threshold}_{normalize}_{test}",
+            np.save(f"/tf/DP/{batch_size}_{sample_len}_{quality_threshold}_{normalize}_{test}",
                     np.array(self.data))
             self.data = np.array(self.data)
             self.actual_signal_generator = iter(self.data)
@@ -51,6 +51,8 @@ class DataGenerator:
             return self.make_batch()
 
     def make_batch(self):
+        if self.load2ram and self.epoch > 0:
+            return None
         X = []
         for _ in range(self.batch_size):
             try:
@@ -70,6 +72,8 @@ class DataGenerator:
     def _reset_files_generator(self, return_next=False):
         self.files_generator = iter(self.files_list)
         self.epoch += 1
+        print("all files were iterated")
+        print(self.epoch)
         if return_next:
             return next(self.files_generator)
 
@@ -99,8 +103,9 @@ class DataGenerator:
             try:
                 filename = next(self.files_generator)
             except StopIteration:
-                print("all files were iterated")
                 filename = self._reset_files_generator(return_next=True)
+                if self.load2ram:
+                    break
             try:
                 fh = Fast5(filename)
             except:

@@ -18,9 +18,15 @@ def generator_wrapper(generator):
 
 
 now = datetime.now()
+print(now)
 data_generator = DataGenerator(**data_generator_config)
 if not data_generator_config['load2ram'] and load_from_file:
-    data_generator.load_from_file('600_256_20_MEDIAN_False.npy')
+    batch_size = data_generator_config['batch_size']
+    sample_len = data_generator_config['sample_len']
+    quality_threshold = data_generator_config['quality_threshold']
+    normalize = data_generator_config['normalize']
+    test = data_generator_config['test']
+    data_generator.load_from_file(f"{batch_size}_{sample_len}_{quality_threshold}_{normalize}_{test}.npy")
 print(datetime.now() - now)
 print(data_generator.data[0].shape)
 steps_per_epoch = data_generator.data.shape[0]
