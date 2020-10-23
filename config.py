@@ -23,3 +23,4 @@ test_seq_path = (r'/tf/puc19/nanopore/MAP_Data/08_07_16_R9_pUC_BC/'
 n_epochs = 25
 model_name = "3_layers_CNN.h5"
 n_validation_baches = 300
+tb_logs_path = /tf/DP/tb_logs

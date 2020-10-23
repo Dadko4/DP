@@ -2,12 +2,13 @@ from data_loader import DataGenerator
 from datetime import datetime
 from model import model_builder
 from tensorflow.keras.callbacks import (EarlyStopping, ReduceLROnPlateau,
-                                        ModelCheckpoint)
+                                        ModelCheckpoint, TensorBoard)
 from tensorflow.keras.backend import clear_session
 import numpy as np
 import warnings
 from config import (model_config, data_generator_config, load_from_file,
-                    n_epochs, model_name, test_seq_path, n_validation_baches)
+                    n_epochs, model_name, test_seq_path, n_validation_baches
+                    tb_logs_path)
 warnings.filterwarnings("ignore")
 np.random.seed(0)
 clear_session()
@@ -55,7 +56,8 @@ lr_cb = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1,
                           min_lr=0.0001)
 mc = ModelCheckpoint(filepath='model.{epoch:02d}-{val_loss:.2f}.h5',
                      save_best_only=True)
-callbacks = [es, lr_cb, mc]
+tb = TensorBoard(log_dir=tb_logs_path)
+callbacks = [es, lr_cb, mc, tb]
 
 history = model.fit(gen, steps_per_epoch=steps_per_epoch, epochs=n_epochs,
                     callbacks=callbacks, verbose=1,
