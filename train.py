@@ -7,7 +7,7 @@ from tensorflow.keras.backend import clear_session
 import numpy as np
 import warnings
 from config import (model_config, data_generator_config, load_from_file,
-                    n_epochs, model_name, test_seq_path, n_validation_baches
+                    n_epochs, model_name, test_seq_path, n_validation_baches,
                     tb_logs_path)
 warnings.filterwarnings("ignore")
 np.random.seed(0)
