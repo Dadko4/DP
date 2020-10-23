@@ -31,5 +31,5 @@ def model_builder(timesteps=300, inner=32, first_and_last=64, input_dim=1,
     x = layers.UpSampling1D(2)(x)
     decoded = layers.Conv1D(1, filter_size, activation='linear', padding='same')(x)
     autoencoder = keras.Model(input_, decoded)
-    autoencoder.compile(optimizer='adam', loss='mean_absolute_error')
+    autoencoder.compile(optimizer='adam', loss='mse')
     return autoencoder
