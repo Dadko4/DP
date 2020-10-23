@@ -12,7 +12,7 @@ np.random.seed(0)
 class DataGenerator:
     def __init__(self, batch_size=50, normalize=None, quality_threshold=0,
                  sample_len=300, step_len=10, load2ram=False, test=False,
-                 random_sample=False):
+                 random_sample=False, seq_path=seq_path):
         files_list = glob(seq_path)
         self.files_list = files_list
         if random_sample:
@@ -34,7 +34,7 @@ class DataGenerator:
                 if self.epoch < 1:
                     self.data.append(batch)
                 else:
-                    self.epoch=0
+                    self.epoch = 0
                     break
             np.save(f"/tf/DP/{batch_size}_{sample_len}_{quality_threshold}_{normalize}_{test}",
                     np.array(self.data))

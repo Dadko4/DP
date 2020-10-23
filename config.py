@@ -18,5 +18,7 @@ model_config = {
 }
 seq_path = (r'/tf/puc19/nanopore/MAP_Data/08_07_16_R9_pUC_BC/'
             r'MA/downloads/pass/NB07/*.fast5')
+test_seq_path = (r'/tf/puc19/nanopore/MAP_Data/08_07_16_R9_pUC_BC/'
+                 r'MA/downloads/pass/NB08/*.fast5')
 n_epochs = 25
 model_name = "3_layers_CNN.h5"
