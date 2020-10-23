@@ -114,7 +114,7 @@ class DataGenerator:
             signal = fh.get_read(raw=True)
             mean_quality = 1000
             if self.quality_threshold > 0:
-                fastq = fh.get_fastq()
+                fastq = fh.get_fastq(analysis="Basecall_2D", section="2D")
                 quality_str = fastq.decode('UTF-8').split('\n')[3]
                 qualities = [util.qstring_to_phred(char) for char in quality_str]
                 mean_quality = np.mean(qualities)

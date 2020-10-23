@@ -5,7 +5,8 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.backend import clear_session
 import numpy as np
 import warnings
-from config import model_config, data_generator_config, load_from_file
+from config import (model_config, data_generator_config, load_from_file,
+                    n_epochs, model_name)
 warnings.filterwarnings("ignore")
 np.random.seed(0)
 clear_session()
@@ -42,6 +43,6 @@ lr_cb = ReduceLROnPlateau(monitor='loss', factor=0.2, patience=2, verbose=1,
                           min_lr=0.0001)
 callbacks = [es, lr_cb]
 
-history = model.fit(gen, steps_per_epoch=steps_per_epoch, epochs=10,
+history = model.fit(gen, steps_per_epoch=steps_per_epoch, epochs=n_epochs,
                     callbacks=callbacks, verbose=1)
-model.save('CNN_model.h5')
+model.save(model_name)
