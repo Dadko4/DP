@@ -14,13 +14,15 @@ model_config = {
  "timesteps": 512,
  "input_dim": 1,
  "first_and_last": 64,
- "inner": 32
+ "inner": 32,
+ "loss": 'mean_absolute_error'
 }
 seq_path = (r'/tf/puc19/nanopore/MAP_Data/08_07_16_R9_pUC_BC/'
             r'MA/downloads/pass/NB07/*.fast5')
 test_seq_path = (r'/tf/puc19/nanopore/MAP_Data/08_07_16_R9_pUC_BC/'
                  r'MA/downloads/pass/NB08/*.fast5')
 n_epochs = 25
-model_name = "3_layers_CNN.h5"
-n_validation_baches = 300
-tb_logs_path = r'/tf/DP/tb_logs'
+model_name = "3_layers_CNN_mae.h5"
+n_validation_baches = 2000
+tb_logs_path = r'/tf/DP/2410/tb_logs'
+model_checkpoint_file = '2410/model.{epoch:02d}-{val_loss:.2f}.h5'

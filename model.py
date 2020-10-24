@@ -12,7 +12,7 @@ np.random.seed(0)
 
 
 def model_builder(timesteps=300, inner=32, first_and_last=64, input_dim=1,
-                  num_of_inner_conv=3, filter_size=12):
+                  num_of_inner_conv=3, filter_size=12, loss='mse'):
     # initializer = RandomNormal(mean=0.0, stddev=0.05, seed=1)
     input_ = keras.Input(shape=(timesteps, input_dim))
     x = layers.Conv1D(first_and_last, filter_size, 
@@ -31,5 +31,5 @@ def model_builder(timesteps=300, inner=32, first_and_last=64, input_dim=1,
     x = layers.UpSampling1D(2)(x)
     decoded = layers.Conv1D(1, filter_size, activation='linear', padding='same')(x)
     autoencoder = keras.Model(input_, decoded)
-    autoencoder.compile(optimizer='adam', loss='mse')
+    autoencoder.compile(optimizer='adam', loss=loss)
     return autoencoder

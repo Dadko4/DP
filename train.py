@@ -8,7 +8,7 @@ import numpy as np
 import warnings
 from config import (model_config, data_generator_config, load_from_file,
                     n_epochs, model_name, test_seq_path, n_validation_baches,
-                    tb_logs_path)
+                    tb_logs_path, model_checkpoint_file)
 warnings.filterwarnings("ignore")
 np.random.seed(0)
 clear_session()
@@ -50,13 +50,13 @@ val_X = np.array([x for x in next(test_data_generator)
 model = model_builder(**model_config)
 print(model.summary())
 
-es = EarlyStopping(monitor='val_loss', mode='min', patience=5,
+es = EarlyStopping(monitor='val_loss', mode='min', patience=9,
                    restore_best_weights=False)
-lr_cb = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1,
+lr_cb = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, verbose=1,
                           min_lr=0.0001)
-mc = ModelCheckpoint(filepath='model.{epoch:02d}-{val_loss:.2f}.h5',
+mc = ModelCheckpoint(filepath=model_checkpoint_file,
                      save_best_only=True)
-tb = TensorBoard(log_dir=tb_logs_path)
+tb = TensorBoard(log_dir=tb_logs_path, histogram_freq=2)
 callbacks = [es, lr_cb, mc, tb]
 
 history = model.fit(gen, steps_per_epoch=steps_per_epoch, epochs=n_epochs,

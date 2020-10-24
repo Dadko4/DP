@@ -9,6 +9,9 @@ sratoolkit.2.10.8-win64/
 *.gz
 *.3
 *.h5
+*/tb_logs/*
+tb_logs/*
+*.out
 # C extensions
 *.so
 
