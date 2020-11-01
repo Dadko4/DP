@@ -1,17 +1,17 @@
 data_generator_config = {
     "sample_len": 512,
     "batch_size": 600,
-    "quality_threshold": 19,
+    "quality_threshold": 17,
     "normalize": "MEDIAN",
     "random_sample": True,
     "step_len": 50,
-    "load2ram": False,
+    "load2ram": True,
     "test": False
 }
 
 corrected_group = "RawGenomeCorrected_bwamem_000"
 
-load_from_file = True
+load_from_file = False
 model_config = {
  "num_of_inner_conv": 3,
  "timesteps": 512,

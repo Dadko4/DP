@@ -32,6 +32,7 @@ class DataGenerator:
         self.test = test
         self.load2ram = load2ram
         self.corrected_group = corrected_group
+        self.data = None
         if load2ram:
             self.data = []
             while self.epoch == 0:
@@ -55,7 +56,16 @@ class DataGenerator:
         else:
             return self.make_batch()
 
-    def is_correct(self, file_):
+    def get_validation_data(self, num_of_batches):
+        if self.data is None:
+            raise ValueError("Cannot return validation data if data isn't loaded")
+        idx = np.random.randint(self.data.shape[0], size=num_of_batches)
+        validation_data = self.data[idx]
+        self.data = np.delete(self.data, idx, axis=0)
+        self.actual_signal_generator = iter(self.data)
+        return validation_data
+
+    def _is_correct(self, file_):
         """
         Returns all fast5s in the path with the specified
         hierarchy by corrected group and subgroups
@@ -65,7 +75,7 @@ class DataGenerator:
         has_subgroups = set(self.subgroups).issubset(corrected_group_keys)
         return True if is_correct and has_subgroups else False
 
-    def parse_starts(self, file_):
+    def _parse_starts(self, file_):
         """
         Returns starting positions in raw signal corresponding to starts of events
         """
@@ -147,8 +157,8 @@ class DataGenerator:
             except:
                 print(f"unable to open file {filename}")
                 continue
-            if self.is_correct(fh):
-                start, start_r = self.parse_starts(fh)
+            if self._is_correct(fh):
+                start, start_r = self._parse_starts(fh)
                 path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
                 template_stop = fh[path][-1][-3] + fh[path][-1][-2] + start
                 path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
