@@ -71,6 +71,8 @@ class DataGenerator:
         hierarchy by corrected group and subgroups
         """
         is_correct = self.corrected_group in file_['Analyses']
+        if not is_correct:
+            return False
         corrected_group_keys = file_['Analyses'][self.corrected_group]
         has_subgroups = set(self.subgroups).issubset(corrected_group_keys)
         return True if is_correct and has_subgroups else False
