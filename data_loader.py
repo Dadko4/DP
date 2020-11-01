@@ -3,16 +3,20 @@ from glob import glob
 from fast5_research import Fast5, util
 from statsmodels import robust
 import random
-from config import seq_path
+from config import seq_path, corrected_group
 
 random.seed(0)
 np.random.seed(0)
 
 
 class DataGenerator:
+
+    subgroups = ['BaseCalled_complement', 'BaseCalled_template']
+
     def __init__(self, batch_size=50, normalize=None, quality_threshold=0,
                  sample_len=300, step_len=10, load2ram=False, test=False,
-                 random_sample=False, seq_path=seq_path):
+                 random_sample=False, seq_path=seq_path,
+                 corrected_group=corrected_group):
         files_list = glob(seq_path)
         self.files_list = files_list
         if random_sample:
@@ -27,6 +31,7 @@ class DataGenerator:
         self.step_len = step_len
         self.test = test
         self.load2ram = load2ram
+        self.corrected_group = corrected_group
         if load2ram:
             self.data = []
             while self.epoch == 0:
@@ -36,9 +41,9 @@ class DataGenerator:
                 else:
                     self.epoch = 0
                     break
-            np.save(f"/tf/DP/{batch_size}_{sample_len}_{quality_threshold}_{normalize}_{test}",
-                    np.array(self.data))
             self.data = np.array(self.data)
+            np.save(f"{batch_size}_{sample_len}_{quality_threshold}_{normalize}_{test}",
+                    self.data)
             self.actual_signal_generator = iter(self.data)
 
     def __next__(self):
@@ -49,6 +54,29 @@ class DataGenerator:
                 return self._reset_actual_generator(return_next=True)
         else:
             return self.make_batch()
+
+    def is_correct(self, file_):
+        """
+        Returns all fast5s in the path with the specified
+        hierarchy by corrected group and subgroups
+        """
+        is_correct = self.corrected_group in file_['Analyses']
+        corrected_group_keys = file_['Analyses'][self.corrected_group]
+        has_subgroups = set(self.subgroups).issubset(corrected_group_keys)
+        return True if is_correct and has_subgroups else False
+
+    def parse_starts(self, file_):
+        """
+        Returns starting positions in raw signal corresponding to starts of events
+        """
+        corr_slot = f"Analyses/{self.corrected_group}/BaseCalled_template"
+        corr_data = file_[corr_slot]
+        start = corr_data['Events'].attrs['read_start_rel_to_raw']
+
+        corr_slot = f"Analyses/{self.corrected_group}/BaseCalled_complement"
+        corr_data = file_[corr_slot]
+        r_start = corr_data['Events'].attrs['read_start_rel_to_raw']
+        return start, r_start
 
     def make_batch(self):
         if self.load2ram and self.epoch > 0:
@@ -98,6 +126,14 @@ class DataGenerator:
             else:
                 return partitioned
 
+    def _normalize(self, signal):
+        uniq_arr = np.unique(signal)
+        if self.normalize == 'MEAN':
+            signal = (signal - np.mean(uniq_arr)) / np.float(np.std(uniq_arr))
+        elif self.normalize == 'MEDIAN':
+            signal = (signal - np.median(uniq_arr)) / np.float(robust.mad(uniq_arr))
+        return signal
+
     def _next_data(self, return_next=False):
         while True:
             try:
@@ -111,6 +147,14 @@ class DataGenerator:
             except:
                 print(f"unable to open file {filename}")
                 continue
+            if self.is_correct(fh):
+                start, start_r = self.parse_starts(fh)
+                path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
+                template_stop = fh[path][-1][-3] + fh[path][-1][-2] + start
+                path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
+                complement_stop = fh[path][-1][-3] + fh[path][-1][-2] + start_r
+            else:
+                continue
             signal = fh.get_read(raw=True)
             mean_quality = 1000
             if self.quality_threshold > 0:
@@ -121,12 +165,11 @@ class DataGenerator:
             fh.close()
             if mean_quality < self.quality_threshold:
                 continue
-            uniq_arr = np.unique(signal)
-            if self.normalize == 'MEAN':
-                signal = (signal - np.mean(uniq_arr)) / np.float(np.std(uniq_arr))
-            elif self.normalize == 'MEDIAN':
-                signal = (signal - np.median(uniq_arr)) / np.float(robust.mad(uniq_arr))
-            self.actual_signal_generator = iter(self._windows(signal))
+            template_signal = self._normalize(signal[start:template_stop])
+            complement_signal = self._normalize(signal[start:complement_stop])
+            partitioned = self._windows(template_signal)
+            partitioned.extend(self._windows(complement_signal))
+            self.actual_signal_generator = iter(partitioned)
             if return_next:
                 return next(self.actual_signal_generator)
             break

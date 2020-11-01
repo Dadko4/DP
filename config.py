@@ -8,6 +8,9 @@ data_generator_config = {
     "load2ram": False,
     "test": False
 }
+
+corrected_group = "RawGenomeCorrected_bwamem_000"
+
 load_from_file = True
 model_config = {
  "num_of_inner_conv": 3,
