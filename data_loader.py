@@ -141,18 +141,18 @@ class DataGenerator:
             events_list[:, 0] -= events['start'][0]
             for idx, len_ in events_list:
                 modif_idx.extend(list(range(idx, idx+len_)))
-            modif_idx = set(modif_idx)
+            modif_idx = np.array(modif_idx)
         i = 0
         partitioned = []
         modifs = []
         while True:
             if i + self.sample_len < signal.shape[0]:
+                if self.test:
+                    act = np.arange(i, i + self.sample_len)
+                    act_m = [np.arange(act.shape[0])[np.in1d(act, modif_idx)]]
+                    modifs.append(act_m)
                 partitioned.append(signal[i:i + self.sample_len])
                 i += self.step_len
-                if self.test:
-                    act = set(range(i, i + self.sample_len))
-                    act_m = [x % self.sample_len for x in act.intersection(modif_idx)]
-                    modifs.append(act_m)
             # elif self.test and i < signal.shape[0]:
             #     from_ = signal.shape[0] - 1 - self.sample_len
             #     to = signal.shape[0] - 1
