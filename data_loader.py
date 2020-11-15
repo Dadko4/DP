@@ -3,6 +3,7 @@ from glob import glob
 from fast5_research import Fast5, util
 from statsmodels import robust
 import random
+import re
 from config import seq_path, corrected_group
 
 random.seed(0)
@@ -11,12 +12,10 @@ np.random.seed(0)
 
 class DataGenerator:
 
-    subgroups = ['BaseCalled_complement', 'BaseCalled_template']
-
     def __init__(self, batch_size=50, normalize=None, quality_threshold=0,
                  sample_len=300, step_len=10, load2ram=False, test=False,
                  random_sample=False, seq_path=seq_path,
-                 corrected_group=corrected_group):
+                 corrected_group=corrected_group, motifs=["CCAGG", "CCTGG", "GATC"]):
         files_list = glob(seq_path)
         self.files_list = files_list
         if random_sample:
@@ -33,6 +32,7 @@ class DataGenerator:
         self.load2ram = load2ram
         self.corrected_group = corrected_group
         self.data = None
+        self.motifs = motifs
         if load2ram:
             self.data = []
             while self.epoch == 0:
@@ -66,15 +66,12 @@ class DataGenerator:
         return validation_data
 
     def _is_correct(self, file_):
-        """
-        Returns all fast5s in the path with the specified
-        hierarchy by corrected group and subgroups
-        """
+        subgroups = ['BaseCalled_complement', 'BaseCalled_template']
         is_correct = self.corrected_group in file_['Analyses']
         if not is_correct:
             return False
         corrected_group_keys = file_['Analyses'][self.corrected_group]
-        has_subgroups = set(self.subgroups).issubset(corrected_group_keys)
+        has_subgroups = set(subgroups).issubset(corrected_group_keys)
         return True if is_correct and has_subgroups else False
 
     def _parse_starts(self, file_):
@@ -94,13 +91,20 @@ class DataGenerator:
         if self.load2ram and self.epoch > 0:
             return None
         X = []
+        y = []
         for _ in range(self.batch_size):
             try:
                 sample = next(self.actual_signal_generator)
             except (StopIteration, TypeError):
                 sample = self._next_data(return_next=True)
             if sample is not None:
-                X.append(sample.reshape(-1, 1))
+                if self.test:
+                    X.append(sample[0].reshape(-1, 1))
+                    y.append(sample[1])
+                else:
+                    X.append(sample.reshape(-1, 1))
+        if self.test:
+            return np.array(X), y
         return np.array(X)
 
     def load_from_file(self, filename):
@@ -123,19 +127,40 @@ class DataGenerator:
         if return_next:
             return next(self.actual_signal_generator)
 
-    def _windows(self, signal):
+    def _windows(self, signal, events=None):
+        if self.test:
+            events_list = []
+            modif_idx = []
+            bases_str = "".join(events['base'].astype(str))
+            for mt in self.motifs:
+                for m in re.finditer(mt, bases_str):
+                    events_list.append([events['start'][m.start() + 1],
+                                        events['length'][m.start() + 1]])
+            events_list = np.array(events_list)
+            events_list = events_list[np.argsort(events_list[:, 0])]
+            events_list[:, 0] -= events['start'][0]
+            for idx, len_ in events_list:
+                modif_idx.extend(list(range(idx, idx+len_)))
+            modif_idx = set(modif_idx)
         i = 0
         partitioned = []
+        modifs = []
         while True:
             if i + self.sample_len < signal.shape[0]:
                 partitioned.append(signal[i:i + self.sample_len])
                 i += self.step_len
-            elif self.test and i < signal.shape[0]:
-                from_ = signal.shape[0] - 1 - self.sample_len
-                to = signal.shape[0] - 1
-                partitioned.append(signal[from_:to])
-                i += self.step_len
+                if self.test:
+                    act = set(range(i, i + self.sample_len))
+                    act_m = [x % self.sample_len for x in act.intersection(modif_idx)]
+                    modifs.append(act_m)
+            # elif self.test and i < signal.shape[0]:
+            #     from_ = signal.shape[0] - 1 - self.sample_len
+            #     to = signal.shape[0] - 1
+            #     partitioned.append(signal[from_:to])
+            #     i += self.step_len
             else:
+                if self.test:
+                    return list(zip(partitioned, modifs))
                 return partitioned
 
     def _normalize(self, signal):
@@ -161,10 +186,15 @@ class DataGenerator:
                 continue
             if self._is_correct(fh):
                 start, start_r = self._parse_starts(fh)
-                path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
-                template_stop = fh[path][-1][-3] + fh[path][-1][-2] + start
-                path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
-                complement_stop = fh[path][-1][-3] + fh[path][-1][-2] + start_r
+                t_path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
+                templt_stop = fh[t_path]['start'][-1] + fh[t_path]['length'][-1] + start
+                c_path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
+                cmplmt_stop = fh[c_path]['start'][-1] + fh[c_path]['length'][-1] + start_r
+                tmplt_events = None
+                cmplmt_events = None
+                if self.test:
+                    tmplt_events = np.array(fh[t_path])
+                    cmplmt_events = np.array(fh[c_path])
             else:
                 continue
             signal = fh.get_read(raw=True)
@@ -177,10 +207,10 @@ class DataGenerator:
             fh.close()
             if mean_quality < self.quality_threshold:
                 continue
-            template_signal = self._normalize(signal[start:template_stop])
-            complement_signal = self._normalize(signal[start:complement_stop])
-            partitioned = self._windows(template_signal)
-            partitioned.extend(self._windows(complement_signal))
+            template_signal = self._normalize(signal[start:templt_stop])
+            complement_signal = self._normalize(signal[start_r:cmplmt_stop])
+            partitioned = self._windows(template_signal, tmplt_events)
+            partitioned.extend(self._windows(complement_signal, cmplmt_events))
             self.actual_signal_generator = iter(partitioned)
             if return_next:
                 return next(self.actual_signal_generator)
