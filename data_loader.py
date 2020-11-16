@@ -16,6 +16,7 @@ class DataGenerator:
                  sample_len=300, step_len=10, load2ram=False, test=False,
                  random_sample=False, seq_path=seq_path,
                  corrected_group=corrected_group, motifs=["CCAGG", "CCTGG", "GATC"]):
+        print(seq_path)
         files_list = glob(seq_path)
         self.files_list = files_list
         if random_sample:
@@ -97,6 +98,7 @@ class DataGenerator:
                 sample = next(self.actual_signal_generator)
             except (StopIteration, TypeError):
                 sample = self._next_data(return_next=True)
+                print("from next_data")
             if sample is not None:
                 if self.test:
                     X.append(sample[0].reshape(-1, 1))
