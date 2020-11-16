@@ -1,10 +1,10 @@
 data_generator_config = {
     "sample_len": 512,
-    "batch_size": 600,
-    "quality_threshold": 17,
+    "batch_size": 1000,
+    "quality_threshold": 14,
     "normalize": "MEDIAN",
     "random_sample": True,
-    "step_len": 50,
+    "step_len": 256,
     "load2ram": True,
     "test": False
 }
@@ -18,14 +18,14 @@ model_config = {
  "input_dim": 1,
  "first_and_last": 64,
  "inner": 32,
- "loss": 'mean_absolute_error'
+ "loss": 'mse'
 }
 seq_path = (r'/tf/puc19/nanopore/MAP_Data/08_07_16_R9_pUC_BC/'
             r'MA/downloads/pass/NB07/*.fast5')
 test_seq_path = (r'/tf/puc19/nanopore/MAP_Data/08_07_16_R9_pUC_BC/'
                  r'MA/downloads/pass/NB08/*.fast5')
-n_epochs = 25
-model_name = "3_layers_CNN_mae.h5"
-n_validation_baches = 2000
-tb_logs_path = r'/tf/DP/2410/tb_logs'
-model_checkpoint_file = '2410/model.{epoch:02d}-{val_loss:.2f}.h5'
+n_epochs = 30
+model_name = "0311/3_layers_CNN_m2e.h5"
+n_validation_baches = 1000
+tb_logs_path = r'0311/tb_logs'
+model_checkpoint_file = '0311/model.{epoch:02d}-{val_loss:.2f}.h5'

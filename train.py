@@ -22,10 +22,12 @@ def generator_wrapper(generator):
 
 
 now = datetime.now()
-print(now)
+print("loading generator...", end=" ")
 data_generator = DataGenerator(**data_generator_config)
+print("done")
 batch_size = data_generator_config['batch_size']
 sample_len = data_generator_config['sample_len']
+print("loading_data...", end=" ")
 if not data_generator_config['load2ram'] and load_from_file:
     quality_threshold = data_generator_config['quality_threshold']
     normalize = data_generator_config['normalize']
@@ -45,7 +47,7 @@ gen = generator_wrapper(data_generator)
 model = model_builder(**model_config)
 print(model.summary())
 
-es = EarlyStopping(monitor='val_loss', mode='min', patience=9,
+es = EarlyStopping(monitor='val_loss', mode='min', patience=10,
                    restore_best_weights=False)
 lr_cb = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, verbose=1,
                           min_lr=0.0001)
