@@ -22,8 +22,9 @@ def model_builder(timesteps=300, inner=32, first_and_last=64, input_dim=1,
         x = layers.Conv1D(inner, filter_size, activation='relu', padding='same')(x)
     encoded = layers.MaxPooling1D(2, padding='same')(x)
 
-    x = layers.Conv1D(inner, filter_size, activation='relu', padding='same')(encoded)
-    x = layers.UpSampling1D(2)(x)
+    middle = layers.Conv1D(1, filter_size, activation='relu', padding='same')(encoded)
+    
+    x = layers.UpSampling1D(2)(middle)
     for _ in range(num_of_inner_conv - 1):
         x = layers.Conv1D(inner, filter_size, activation='relu', padding='same')(x)
         x = layers.UpSampling1D(2)(x)

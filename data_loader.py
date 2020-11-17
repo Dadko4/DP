@@ -98,7 +98,6 @@ class DataGenerator:
                 sample = next(self.actual_signal_generator)
             except (StopIteration, TypeError):
                 sample = self._next_data(return_next=True)
-                print("from next_data")
             if sample is not None:
                 if self.test:
                     X.append(sample[0].reshape(-1, 1))

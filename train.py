@@ -28,7 +28,7 @@ print("done")
 batch_size = data_generator_config['batch_size']
 sample_len = data_generator_config['sample_len']
 print("loading_data...", end=" ")
-if not data_generator_config['load2ram'] and load_from_file:
+if load_from_file:
     quality_threshold = data_generator_config['quality_threshold']
     normalize = data_generator_config['normalize']
     test = data_generator_config['test']
@@ -43,10 +43,9 @@ val_X = val_X.reshape(n_validation_baches*batch_size, sample_len, 1)
 steps_per_epoch = data_generator.data.shape[0]
 gen = generator_wrapper(data_generator)
 
-
 model = model_builder(**model_config)
 print(model.summary())
-
+print(model.get_config()['layers'][3]['config']['kernel_size'])
 es = EarlyStopping(monitor='val_loss', mode='min', patience=10,
                    restore_best_weights=False)
 lr_cb = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, verbose=1,
