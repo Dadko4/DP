@@ -138,10 +138,11 @@ class DataGenerator:
                     events_list.append([events['start'][m.start() + 1],
                                         events['length'][m.start() + 1]])
             events_list = np.array(events_list)
-            events_list = events_list[np.argsort(events_list[:, 0])]
-            events_list[:, 0] -= events['start'][0]
-            for idx, len_ in events_list:
-                modif_idx.extend(list(range(idx, idx+len_)))
+            if len(events_list) > 0:
+                events_list = events_list[np.argsort(events_list[:, 0])]
+                events_list[:, 0] -= events['start'][0]
+                for idx, len_ in events_list:
+                    modif_idx.extend(list(range(idx, idx+len_)))
             modif_idx = np.array(modif_idx)
         i = 0
         partitioned = []
