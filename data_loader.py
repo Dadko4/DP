@@ -15,7 +15,8 @@ class DataGenerator:
     def __init__(self, batch_size=50, normalize=None, quality_threshold=0,
                  sample_len=300, step_len=10, load2ram=False, test=False,
                  random_sample=False, seq_path=seq_path,
-                 corrected_group=corrected_group, motifs=["CCAGG", "CCTGG", "GATC"]):
+                 corrected_group=corrected_group, motifs=["CCAGG", "CCTGG", "GATC"],
+                 min_test_events_in_window=25):
         print(seq_path)
         files_list = glob(seq_path)
         self.files_list = files_list
@@ -34,6 +35,8 @@ class DataGenerator:
         self.corrected_group = corrected_group
         self.data = None
         self.motifs = motifs
+        self.motifs_map = {m: i for i, m in enumerate(motifs)}
+        self.min_test_events_in_window = min_test_events_in_window
         if load2ram:
             self.data = []
             while self.epoch == 0:
@@ -93,6 +96,7 @@ class DataGenerator:
             return None
         X = []
         y = []
+        types = []
         for _ in range(self.batch_size):
             try:
                 sample = next(self.actual_signal_generator)
@@ -102,10 +106,11 @@ class DataGenerator:
                 if self.test:
                     X.append(sample[0].reshape(-1, 1))
                     y.append(sample[1])
+                    types.append(sample[2])
                 else:
                     X.append(sample.reshape(-1, 1))
         if self.test:
-            return np.array(X), y
+            return np.array(X), y, types
         return np.array(X)
 
     def load_from_file(self, filename):
@@ -128,32 +133,57 @@ class DataGenerator:
         if return_next:
             return next(self.actual_signal_generator)
 
+    def _find_nearest(self, array, value):
+        array = np.asarray(array)
+        idx = (np.abs(array - value)).argmin()
+        if array[idx] > 0:
+            return idx
+        else:
+            return idx + 1
+        
     def _windows(self, signal, events=None):
         if self.test:
             events_list = []
             modif_idx = []
+            modif_type = []
+            modif_type_idx = []
             bases_str = "".join(events['base'].astype(str))
+            starts = events['start']
             for mt in self.motifs:
                 for m in re.finditer(mt, bases_str):
                     events_list.append([events['start'][m.start() + 1],
                                         events['length'][m.start() + 1]])
+                    modif_type.append(self.motifs_map[mt])
+            modif_type = np.array(modif_type)
             events_list = np.array(events_list)
             if len(events_list) > 0:
-                events_list = events_list[np.argsort(events_list[:, 0])]
+                idx = np.argsort(events_list[:, 0])
+                events_list = events_list[idx]
+                modif_type = modif_type[idx]
                 events_list[:, 0] -= events['start'][0]
-                for idx, len_ in events_list:
+                for i, (idx, len_) in enumerate(events_list):
                     modif_idx.extend(list(range(idx, idx+len_)))
+                    modif_type_idx.extend([modif_type[i] for _ in range(len_)])
             modif_idx = np.array(modif_idx)
+            modif_type_idx = np.array(modif_type_idx)
         i = 0
         partitioned = []
         modifs = []
+        modif_types = []
         while True:
             if i + self.sample_len < signal.shape[0]:
                 if self.test:
                     act = np.arange(i, i + self.sample_len)
-                    act_m = [np.arange(act.shape[0])[np.in1d(act, modif_idx)]]
-                    modifs.append(act_m)
-                partitioned.append(signal[i:i + self.sample_len])
+                    idx = np.in1d(act, modif_idx)
+                    act_m = [np.arange(act.shape[0])[idx]]
+                    idx = np.in1d(modif_idx, act)
+                    act_m_type = modif_type_idx[idx]
+                    if ((i < starts) & (starts < i + self.sample_len)).sum() > self.min_test_events_in_window:
+                        modifs.append(act_m)
+                        modif_types.append(act_m_type)
+                        partitioned.append(signal[i:i + self.sample_len])
+                else:
+                    partitioned.append(signal[i:i + self.sample_len])
                 i += self.step_len
             # elif self.test and i < signal.shape[0]:
             #     from_ = signal.shape[0] - 1 - self.sample_len
@@ -162,7 +192,7 @@ class DataGenerator:
             #     i += self.step_len
             else:
                 if self.test:
-                    return list(zip(partitioned, modifs))
+                    return list(zip(partitioned, modifs, modif_types))
                 return partitioned
 
     def _normalize(self, signal):

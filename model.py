@@ -13,24 +13,23 @@ np.random.seed(0)
 
 def model_builder(timesteps=300, inner=32, first_and_last=64, input_dim=1,
                   num_of_inner_conv=3, filter_size=12, loss='mse'):
-    # initializer = RandomNormal(mean=0.0, stddev=0.05, seed=1)
     input_ = keras.Input(shape=(timesteps, input_dim))
     x = layers.Conv1D(first_and_last, filter_size, 
-                      activation='relu', padding='same')(input_)
+                      activation=layers.ELU(alpha=1), padding='same')(input_)
     for _ in range(num_of_inner_conv):
-        x = layers.MaxPooling1D(2, padding='same')(x)
-        x = layers.Conv1D(inner, filter_size, activation='relu', padding='same')(x)
-    encoded = layers.MaxPooling1D(2, padding='same')(x)
+        x = layers.AveragePooling1D(2, padding='same')(x)
+        x = layers.Conv1D(inner, filter_size, activation=layers.ELU(alpha=1), padding='same')(x)
+    encoded = layers.AveragePooling1D(2, padding='same')(x)
 
-    middle = layers.Conv1D(1, filter_size, activation='relu', padding='same')(encoded)
+    middle = layers.Conv1D(1, filter_size, activation=layers.ELU(alpha=1), padding='same')(encoded)
     
     x = layers.UpSampling1D(2)(middle)
     for _ in range(num_of_inner_conv - 1):
-        x = layers.Conv1D(inner, filter_size, activation='relu', padding='same')(x)
+        x = layers.Conv1D(inner, filter_size, activation=layers.ELU(alpha=1), padding='same')(x)
         x = layers.UpSampling1D(2)(x)
-    x = layers.Conv1D(first_and_last, filter_size, activation='relu', padding='same')(x)
+    x = layers.Conv1D(first_and_last, filter_size, activation=layers.ELU(alpha=1), padding='same')(x)
     x = layers.UpSampling1D(2)(x)
     decoded = layers.Conv1D(1, filter_size, activation='linear', padding='same')(x)
     autoencoder = keras.Model(input_, decoded)
-    autoencoder.compile(optimizer='adam', loss=loss)
+    autoencoder.compile(optimizer='adadelta', loss=loss)
     return autoencoder
