@@ -216,14 +216,15 @@ class DataGenerator:
             except:
                 print(f"unable to open file {filename}")
                 continue
-            if self._is_correct(fh):
+            tmplt_events = None
+            cmplmt_events = None
+            if selt.test and self._is_correct(fh):
                 start, start_r = self._parse_starts(fh)
                 t_path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
                 templt_stop = fh[t_path]['start'][-1] + fh[t_path]['length'][-1] + start
                 c_path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
                 cmplmt_stop = fh[c_path]['start'][-1] + fh[c_path]['length'][-1] + start_r
-                tmplt_events = None
-                cmplmt_events = None
+
                 if self.test:
                     tmplt_events = np.array(fh[t_path])
                     cmplmt_events = np.array(fh[c_path])
