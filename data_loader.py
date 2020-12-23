@@ -220,14 +220,14 @@ class DataGenerator:
             cmplmt_events = None
             if selt.test:
                 if self._is_correct(fh):
-                start, start_r = self._parse_starts(fh)
-                t_path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
-                templt_stop = fh[t_path]['start'][-1] + fh[t_path]['length'][-1] + start
-                c_path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
-                cmplmt_stop = fh[c_path]['start'][-1] + fh[c_path]['length'][-1] + start_r
+                    start, start_r = self._parse_starts(fh)
+                    t_path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
+                    templt_stop = fh[t_path]['start'][-1] + fh[t_path]['length'][-1] + start
+                    c_path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
+                    cmplmt_stop = fh[c_path]['start'][-1] + fh[c_path]['length'][-1] + start_r
 
-                tmplt_events = np.array(fh[t_path])
-                cmplmt_events = np.array(fh[c_path])
+                    tmplt_events = np.array(fh[t_path])
+                    cmplmt_events = np.array(fh[c_path])
                 else:
                     continue
             signal = fh.get_read(raw=True)
