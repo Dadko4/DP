@@ -218,7 +218,8 @@ class DataGenerator:
                 continue
             tmplt_events = None
             cmplmt_events = None
-            if selt.test and self._is_correct(fh):
+            if selt.test:
+                if self._is_correct(fh):
                 start, start_r = self._parse_starts(fh)
                 t_path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
                 templt_stop = fh[t_path]['start'][-1] + fh[t_path]['length'][-1] + start
@@ -228,8 +229,8 @@ class DataGenerator:
                 if self.test:
                     tmplt_events = np.array(fh[t_path])
                     cmplmt_events = np.array(fh[c_path])
-            else:
-                continue
+                else:
+                    continue
             signal = fh.get_read(raw=True)
             mean_quality = 1000
             if self.quality_threshold > 0:
