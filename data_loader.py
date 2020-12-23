@@ -226,9 +226,8 @@ class DataGenerator:
                 c_path = f'Analyses/{self.corrected_group}/BaseCalled_complement/Events/'
                 cmplmt_stop = fh[c_path]['start'][-1] + fh[c_path]['length'][-1] + start_r
 
-                if self.test:
-                    tmplt_events = np.array(fh[t_path])
-                    cmplmt_events = np.array(fh[c_path])
+                tmplt_events = np.array(fh[t_path])
+                cmplmt_events = np.array(fh[c_path])
                 else:
                     continue
             signal = fh.get_read(raw=True)
