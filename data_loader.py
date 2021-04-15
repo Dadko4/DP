@@ -63,7 +63,8 @@ class DataGenerator:
     def get_validation_data(self, num_of_batches):
         if self.data is None:
             raise ValueError("Cannot return validation data if data isn't loaded")
-        idx = np.random.randint(self.data.shape[0], size=num_of_batches)
+        idx = np.arange(0, self.data.shape[0])
+        idx = np.random.choice(idx, num_of_batches)
         validation_data = self.data[idx]
         self.data = np.delete(self.data, idx, axis=0)
         self.actual_signal_generator = iter(self.data)
@@ -113,9 +114,17 @@ class DataGenerator:
             return np.array(X), y, types
         return np.array(X)
 
-    def load_from_file(self, filename):
+    def load_from_file(self, filename, new_batch_size=False):
         with open(filename, 'rb') as f:
             self.data = np.load(f)
+        if new_batch_size:
+            shape = self.data.shape
+            coef = shape[1] / new_batch_size
+            if not coef.is_integer():
+                raise ValueError("new batch size must be divisor of actual batch size")
+            coef = int(coef)
+            self.data = self.data.reshape(shape[0]*coef, shape[1]//coef,
+                                          self.sample_len, 1)
         self.load2ram = True
         self.actual_signal_generator = iter(self.data)
 
@@ -129,6 +138,7 @@ class DataGenerator:
 
     def _reset_actual_generator(self, return_next=False):
         self.epoch += 1
+        np.random.shuffle(self.data)
         self.actual_signal_generator = iter(self.data)
         if return_next:
             return next(self.actual_signal_generator)
@@ -218,7 +228,7 @@ class DataGenerator:
                 continue
             tmplt_events = None
             cmplmt_events = None
-            if selt.test:
+            if self.test:
                 if self._is_correct(fh):
                     start, start_r = self._parse_starts(fh)
                     t_path = f'Analyses/{self.corrected_group}/BaseCalled_template/Events/'
